@@ -10,6 +10,4 @@ Analyzed a longitudinal Parkinson’s Disease dataset and examined multi-visit c
 
 Integrated multimodal features from participants’ motor, psychological, neurological, pharmacological, verbal/linguistic, and physical assessments to characterize progression and identify early predictive risk factors
 
-Applied algorithmic approaches to integrate motor, neurological, and behavioral features
-
 Ran decision trees and random forest models in parallel to maximize efficiency and reduce training time
