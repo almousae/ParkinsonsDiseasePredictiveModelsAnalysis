@@ -1,0 +1,1489 @@
+--- 
+title: "A Minimal Book Example"
+author: "John Doe"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography:
+- book.bib
+- packages.bib
+description: |
+  This is a minimal example of using the bookdown package to write a book.
+  set in the _output.yml file.
+  The HTML output format for this example is bookdown::gitbook,
+link-citations: yes
+github-repo: rstudio/bookdown-demo
+---
+
+# About
+
+This is a _sample_ book written in **Markdown**. You can use anything that Pandoc's Markdown supports; for example, a math equation $a^2 + b^2 = c^2$.
+
+## Usage 
+
+Each **bookdown** chapter is an .Rmd file, and each .Rmd file can contain one (and only one) chapter. A chapter *must* start with a first-level heading: `# A good chapter`, and can contain one (and only one) first-level heading.
+
+Use second-level and higher headings within chapters like: `## A short section` or `### An even shorter section`.
+
+The `index.Rmd` file is required, and is also your first book chapter. It will be the homepage when you render the book.
+
+## Render book
+
+You can render the HTML version of this example book without changing anything:
+
+1. Find the **Build** pane in the RStudio IDE, and
+
+1. Click on **Build Book**, then select your output format, or select "All formats" if you'd like to use multiple formats from the same book source files.
+
+Or build the book from the R console:
+
+```{r, eval=FALSE}
+bookdown::render_book()
+```
+
+To render this example to PDF as a `bookdown::pdf_book`, you'll need to install XeLaTeX. You are recommended to install TinyTeX (which includes XeLaTeX): <https://yihui.org/tinytex/>.
+
+## Preview book
+
+As you work, you may start a local server to live preview this HTML book. This preview will update as you edit the book when you save individual .Rmd files. You can start the server in a work session by using the RStudio add-in "Preview book", or from the R console:
+
+```{r eval=FALSE}
+bookdown::serve_book()
+```
+
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+```
+
+<!--chapter:end:index.Rmd-->
+
+# Hello bookdown 
+
+All chapters start with a first-level heading followed by your chapter title, like the line above. There should be only one first-level heading (`#`) per .Rmd file.
+
+## A section
+
+All chapter sections start with a second-level (`##`) or higher heading followed by your section title, like the sections above and below here. You can have as many as you want within a chapter.
+
+### An unnumbered section {-}
+
+Chapters and sections are numbered by default. To un-number a heading, add a `{.unnumbered}` or the shorter `{-}` at the end of the heading, like in this section.
+
+<!--chapter:end:01-intro.Rmd-->
+
+# Cross-references {#cross}
+
+Cross-references make it easier for your readers to find and link to elements in your book.
+
+## Chapters and sub-chapters
+
+There are two steps to cross-reference any heading:
+
+1. Label the heading: `# Hello world {#nice-label}`. 
+    - Leave the label off if you like the automated heading generated based on your heading title: for example, `# Hello world` = `# Hello world {#hello-world}`.
+    - To label an un-numbered heading, use: `# Hello world {-#nice-label}` or `{# Hello world .unnumbered}`.
+
+1. Next, reference the labeled heading anywhere in the text using `\@ref(nice-label)`; for example, please see Chapter \@ref(cross). 
+    - If you prefer text as the link instead of a numbered reference use: [any text you want can go here](#cross).
+
+## Captioned figures and tables
+
+Figures and tables *with captions* can also be cross-referenced from elsewhere in your book using `\@ref(fig:chunk-label)` and `\@ref(tab:chunk-label)`, respectively.
+
+See Figure \@ref(fig:nice-fig).
+
+```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center', fig.alt='Plot with connected points showing that vapor pressure of mercury increases exponentially as temperature increases.'}
+par(mar = c(4, 4, .1, .1))
+plot(pressure, type = 'b', pch = 19)
+```
+
+Don't miss Table \@ref(tab:nice-tab).
+
+```{r nice-tab, tidy=FALSE}
+knitr::kable(
+  head(pressure, 10), caption = 'Here is a nice table!',
+  booktabs = TRUE
+)
+```
+
+<!--chapter:end:02-cross-refs.Rmd-->
+
+# Parts
+
+You can add parts to organize one or more book chapters together. Parts can be inserted at the top of an .Rmd file, before the first-level chapter heading in that same file. 
+
+Add a numbered part: `# (PART) Act one {-}` (followed by `# A chapter`)
+
+Add an unnumbered part: `# (PART\*) Act one {-}` (followed by `# A chapter`)
+
+Add an appendix as a special kind of un-numbered part: `# (APPENDIX) Other stuff {-}` (followed by `# A chapter`). Chapters in an appendix are prepended with letters instead of numbers.
+
+
+
+
+<!--chapter:end:03-parts.Rmd-->
+
+# Footnotes and citations 
+
+## Footnotes
+
+Footnotes are put inside the square brackets after a caret `^[]`. Like this one ^[This is a footnote.]. 
+
+## Citations
+
+Reference items in your bibliography file(s) using `@key`.
+
+For example, we are using the **bookdown** package [@R-bookdown] (check out the last code chunk in index.Rmd to see how this citation key was added) in this sample book, which was built on top of R Markdown and **knitr** [@xie2015] (this citation was added manually in an external file book.bib). 
+Note that the `.bib` files need to be listed in the index.Rmd with the YAML `bibliography` key.
+
+
+The RStudio Visual Markdown Editor can also make it easier to insert citations: <https://rstudio.github.io/visual-markdown-editing/#/citations>
+
+<!--chapter:end:04-citations.Rmd-->
+
+# Blocks
+
+## Equations
+
+Here is an equation.
+
+\begin{equation} 
+  f\left(k\right) = \binom{n}{k} p^k\left(1-p\right)^{n-k}
+  (\#eq:binom)
+\end{equation} 
+
+You may refer to using `\@ref(eq:binom)`, like see Equation \@ref(eq:binom).
+
+
+## Theorems and proofs
+
+Labeled theorems can be referenced in text using `\@ref(thm:tri)`, for example, check out this smart theorem \@ref(thm:tri).
+
+::: {.theorem #tri}
+For a right triangle, if $c$ denotes the *length* of the hypotenuse
+and $a$ and $b$ denote the lengths of the **other** two sides, we have
+$$a^2 + b^2 = c^2$$
+:::
+
+Read more here <https://bookdown.org/yihui/bookdown/markdown-extensions-by-bookdown.html>.
+
+## Callout blocks
+
+
+The R Markdown Cookbook provides more help on how to use custom blocks to design your own callouts: https://bookdown.org/yihui/rmarkdown-cookbook/custom-blocks.html
+
+<!--chapter:end:05-blocks.Rmd-->
+
+# Sharing your book
+
+## Publishing
+
+HTML books can be published online, see: https://bookdown.org/yihui/bookdown/publishing.html
+
+## 404 pages
+
+By default, users will be directed to a 404 page if they try to access a webpage that cannot be found. If you'd like to customize your 404 page instead of using the default, you may add either a `_404.Rmd` or `_404.md` file to your project root and use code and/or Markdown syntax.
+
+## Metadata for sharing
+
+Bookdown HTML books will provide HTML metadata for social sharing on platforms like Twitter, Facebook, and LinkedIn, using information you provide in the `index.Rmd` YAML. To setup, set the `url` for your book and the path to your `cover-image` file. Your book's `title` and `description` are also used.
+
+
+
+This `gitbook` uses the same social sharing data across all chapters in your book- all links shared will look the same.
+
+Specify your book's source repository on GitHub using the `edit` key under the configuration options in the `_output.yml` file, which allows users to suggest an edit by linking to a chapter's source file. 
+
+Read more about the features of this output format here:
+
+https://pkgs.rstudio.com/bookdown/reference/gitbook.html
+
+Or use:
+
+```{r eval=FALSE}
+?bookdown::gitbook
+```
+
+
+
+<!--chapter:end:06-share.Rmd-->
+
+`r if (knitr::is_html_output()) '
+# References {-}
+'`
+
+<!--chapter:end:07-references.Rmd-->
+
+# Trees {#trees}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(rpart)
+library(rpart.plot)
+data(cars)
+str(cars)
+m1 <- rpart(dist ~ speed, data=cars)
+rpart.plot(m1)
+```
+```{r}
+library(tree)
+z.car <- tree(speed ~ dist,cars)
+z.car
+plot(z.car)
+text(z.car)
+```
+```{r}
+##install.packages("tidyverse")
+##install.packages("lubridate")
+library(tidyverse)
+library(lubridate)
+data(iris)
+n.iris <- iris %>%
+  rename(S.Length=Sepal.Length, S.Width=Sepal.Width, P.Length=Petal.Length, P.Width=Petal.Width)
+z.iris <- tree(Species ~ S.Length + S.Width + P.Length+ P.Width, n.iris)
+z.iris
+plot(z.iris)
+text(z.iris)
+```
+
+```{r}
+k1 <- rpart(Species ~ Sepal.Length + Sepal.Width + Petal.Length+ Petal.Width, iris)
+k1
+rpart.plot(k1)
+```
+
+
+```{r}
+
+#parkinsons = read.csv('ppmi_data.csv',check.names = FALSE, stringAsFactors = TRUE)
+
+parkinsons <- read_csv("ppmi_data.csv", show_col_types = FALSE)
+
+parkinsons = data.frame(parkinsons,stringsAsFactors = TRUE)
+
+#parkinsons <- parkinsons %>%
+ # rename(Subject.Cohort="Subject Cohort",FamilyHistory="Has Family Members with PD",AgeatScreening = "Age at Screening", YearsofEducation = "Years of Education",
+#BentonScore6 = "Benton Judgment of Line Orientation Score (Visit 06 (Month 24))")
+#ptree <- rpart(YearsofEducation ~ AgeatScreening, parkinsons)
+##ptree <- rpart(Subject.Cohort ~ FamilyHistory + Handedness + Gender, data=parkinsons)
+#rpart.plot(ptree)
+```
+
+
+
+```{r}
+#ntree <- rpart(YearsofEducation ~ AgeatScreening + BentonScore6, parkinsons)
+#rpart.plot(ntree)
+```
+```{r}
+stree <-  rpart(Gender ~ ., data=parkinsons)
+rpart.plot(stree)
+```
+
+
+```{r}
+ltree <- rpart(Gender ~ ., data=parkinsons)
+summary(ltree)
+
+s <- rpart.plot(ltree)
+```
+
+
+```{r}
+data("women")
+data("kyphosis")
+k <- rpart(Age ~ Kyphosis, kyphosis)
+rpart.plot(k)
+```
+
+
+## Including Plots
+
+```{r}
+library(randomForest)
+rtree1 <- rpart(Species ~.,iris)
+rtree2 <- rpart(Species ~.,control = rpart.control(cp=0,minsplit=1),iris)
+#complexity parameter: 
+#minsplit:min number of observations to be present for a split to occur
+rpart.plot(rtree1)
+rpart.plot(rtree2)
+```
+```{r}
+#set.seed(200)
+#rf1 <- randomForest(Species ~., ntree = 500, mtry = 4, iris)
+##number of variables randomly sampled
+#rf
+#plot(rf1)
+```
+
+```{r} 
+library(rfUtilities)
+library(randomForest)
+#rf.crossValidation(rf, #iris[,c(1:4)],ydata=iris$Species,seed=590)
+```
+
+```{r}
+factor.columns <- sapply(parkinsons,function(x)
+  class(x) != 'integer' &
+  class(x) != 'numeric')
+
+parkinsons[,factor.columns] <- data.frame(apply(parkinsons[,factor.columns,drop=F], 2, as.factor),stringsAsFactors = TRUE)
+parkinsons <- na.roughfix(parkinsons)
+```
+
+```{r}
+library(randomForest)
+# Parkinson's data set (classification)
+#data <- read.table(file = "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/parkinsons.data", sep = ",", header = TRUE, check.names = FALSE)
+data <- parkinsons
+response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(data[response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+response_var <- data[!is.na(data[response]), colnames(data) == response]
+predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(response_var)
+nrow(data)
+nrow(parkinsons)
+
+```
+
+
+```{r}
+#install.packages('rfExtra_0.0.0.9000.tar.gz',type='source', #repos=NULL, force=TRUE)
+library(rfExtra)
+library(parallel)
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+# Set seed for reproducible results
+set.seed(1)
+
+# Downsample to the smaller class size
+response_var = as.factor(response_var)
+min_size = min(table(response_var))
+num_classes = length(table(response_var))
+
+# Train random forest
+rf = rfExtra::randomForest(x = predictor_vars, y = response_var,
+    importance = TRUE, groupImp = TRUE, ntree = 1e+05,
+    sampsize = rep(min_size, num_classes), varGroups = factor(c(rep("Group 1",
+        5), rep("Group 2", 11), rep("Group 3", 6))))
+
+
+# Plot group variable importance
+grpVarImpPlot(rf)
+
+
+```
+```{r}
+impo<- data.frame(importance(rf))
+impo2 <- impo[order(-impo$MeanDecreaseAccuracy),]
+
+```
+
+```{r}
+rf
+```
+
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+
+# Train random forest models in parallel
+res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+
+```{r}
+par_rf$confusion
+```
+
+
+```{r}
+es<- data.frame(importance(par_rf))
+es2 <- es[order(-es$MeanDecreaseAccuracy),]
+listt <- row.names(es2[0:30,])
+listt
+
+```
+
+```{r}
+library(tidyverse)
+library(dplyr)
+new_df <- select(parkinsons, c("Subject.Cohort",listt))
+new_df
+```
+
+```{r}
+library(randomForest)
+# Parkinson's data set (classification)
+#data <- read.table(file = "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/parkinsons.data", sep = ",", header = TRUE, check.names = FALSE)
+data <- new_df
+response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(data[response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+response_var <- data[!is.na(data[response]), colnames(data) == response]
+predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(response_var)
+nrow(data)
+nrow(parkinsons)
+
+```
+
+
+```{r}
+# Set seed for reproducible results
+set.seed(1)
+
+# Downsample to the smaller class size
+response_var = as.factor(response_var)
+min_size = min(table(response_var))
+num_classes = length(table(response_var))
+```
+
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+
+# Train random forest models in parallel
+res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+```{r}
+
+par_rf$err.rate
+```
+```{r}
+
+```
+
+
+```{r}
+N <- 301
+ilist <- vector()
+errlist <- vector()
+for(i in 6:N){
+  listt <- row.names(es2[0:N,])
+  new_df <- select(parkinsons, c("Subject.Cohort",listt))
+  data <- new_df
+  response <- "Subject.Cohort"
+  # Remove samples with missing values in the response variable
+  response_var <- data[!is.na(data[response]), colnames(data) ==
+                         response]
+  predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+  num_jobs = 8
+  ntree_per_job = ceiling(1000/num_jobs)
+  # Set seed for parallel environment
+  set.seed(1, "L'Ecuyer-CMRG")
+  cl <- makeCluster(getOption("cl.cores", num_jobs))
+  # Export variables
+  clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+  # Train random forest models in parallel
+  res = parLapply(cl, 1:num_jobs, function(num_jobs)
+  rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = FALSE))
+  # Remember to stop the cluster to avoid data leakage
+  stopCluster(cl)
+  # Combine results
+  par_rf = do.call(rfExtra::combine, res)
+  print(par_rf$err.rate)
+  ilist <- append(ilist,i)
+  errlist <- append(errlist,par_rf$err.rate)
+}
+x <- as.data.frame(ilist)
+y <- as.data.frame(errlist)
+df <- data.frame()
+df<- cbind(x,y)
+
+
+
+```
+
+```{r}
+ord <- df[order(df$errlist),]
+ord
+```
+```{r}
+plot(ord)
+```
+
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 1
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Train random forest models in parallel
+system.time({
+    res = mclapply(1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars,
+        y = response_var, ntree = ntree_per_job, importance = TRUE,
+        groupImp = TRUE, sampsize = rep(min_size, num_classes),
+        varGroups = factor(c(rep("Group 1", 5), rep("Group 2",
+            11), rep("Group 3", 6)))), mc.cores = num_jobs)
+})
+```
+
+```{r}
+par_rf = do.call(rfExtra::combine, rf)
+```
+```{r}
+cl <- makeCluster(2)
+```
+
+```{r}
+
+```
+
+
+```{r}
+park <- randomForest(Subject.Cohort ~ .,ntree= 100,parkinsons,importance=TRUE)
+
+
+
+ds<- data.frame(importance(park))
+ds2 <- ds[order(-ds$MeanDecreaseAccuracy),]
+
+#order(importance(park))
+
+#plot(importance(park))
+
+```
+
+
+```{r}
+set.seed(195)
+rf3 <- randomForest(Species ~., ntree = 10000, mtry = 4, iris)
+rf3
+plot(rf3)
+```
+
+```{r}
+set.seed(195)
+rf4 <- randomForest(Species ~., ntree = 3, mtry = 4, iris)
+rf4
+plot(rf4)
+```
+
+```{r}
+set.seed(195)
+rf5 <- randomForest(Species ~., ntree = 500, mtry = 1, iris)
+rf5
+plot(rf5)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+diamonds1 <- diamonds[c(1:3000),]
+er <- randomForest(price ~.,diamonds1)
+er
+summary(er)
+```
+```{r}
+
+#parkinsons <- parkinsons %>%
+
+
+p#arktree <- randomForest(Subject.Cohort ~ ., parkinsons)
+
+```
+
+
+
+```{r}
+importance(er)
+order(importance(er)) #least to greatest
+```
+
+```{r}
+varImpPlot(er,color = "blue")
+```
+
+```{r}
+ctree <- rpart(price ~ .,diamonds1)
+rpart.plot(ctree)
+```
+
+```{r}
+cr <- randomForest(carat ~ ., diamonds1)
+importance(cr)
+```
+
+```{r}
+dtree <- rpart(carat ~ .,diamonds1)
+rpart.plot(dtree)
+```
+```{r}
+library(pacman)
+```
+
+
+
+```{r}
+beta0 = 1.5 #intercept
+slope = 2.0
+set.seed(2)
+n = 500 #sample size
+M = 1000 #number of times population is resampled
+
+#normal distributions
+error = rnorm(n, mean = 0, sd = 2)
+X = rnorm(n, mean = 5, sd = 5)
+Y = beta0 + slope*X + error
+
+library(data.table)
+pacman::p_load(data.table,fixest)
+data = data.table(X=X,Y=Y)
+
+#show regressions and compare to true parameters
+regression <- feols(data = data, Y ~ X)
+#calc conf interv
+conf95 <- c(regression$coefficients[2] - 1.96 * regression$se[2],regression$coefficients[2] + 1.96 * regression$se[2])
+regression
+conf95 # pop parameter between these two values 95% of the time
+```
+
+```{r}
+#bootstrap can help get an estimate of se of the slope aka:
+regression$se[2]
+```
+
+```{r}
+#sample rows in the data randomly with replacement:
+#(500 rows)
+X<- as.matrix(cbind(1,X))
+Y <- as.matrix(Y)
+#beta <-solve(t(X%*%X)%*%t(X)%*%Y)
+
+slopeest <- rep (0,M)
+interceptest <- rep(0,M)
+
+#bootstrapping
+for( i in 1:M) { # 1 to 1000 
+  boot <- data[sample(n,n,replace= TRUE)]
+  bootX <- as.matrix(boot[,c(1,2)])
+  bootY <- as.matrix(boot[,c(3)])
+  boot_beta <-solve(t(bootX%*%bootX)%*%t(bootX)%*%bootY)
+  interceptest[i] <- boot_beta[1]
+  slopeest[i] <- boot_beta[2]
+}
+
+bootSEint <- sd(interceptes)
+bootSEslope <- sd(slopeest)
+
+#t stats distrubution
+#t <- (slopeest - beta[2]) / sd(slopeest)
+
+#find parameters 
+  
+```
+
+
+<!--chapter:end:08-Trees-Practice.Rmd-->
+
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Random Forest {#RandomForest}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown Description:
+
+This is an R Markdown document containing drafted statistical code that analyzes a longitudinal Parkinson's Disease Progression Marker Initiative Dataset extracted from this website <https://www.ppmi-info.org/>
+
+Data incorporates a longitudinal observational study of 716 subjects, where collection of observations began in 2010. Approximately 295 longitudinal observations are included in this dataset. 
+
+Random Forest Models and Feature Selection were incorporated to lower overall error rate of the predictive model.
+
+```{r cars}
+#libraries
+library(tidyverse)
+library(lubridate)
+library(randomForest)
+library(rfExtra)
+library(parallel)
+library(rpart)
+library(rpart.plot)
+```
+
+
+```{r}
+#loading data
+parkinsons <- read_csv("ppmi_data.csv", show_col_types = FALSE)
+
+parkinsons = data.frame(parkinsons,stringsAsFactors = TRUE)
+#still has NA slots at this point
+```
+
+```{r}
+single_tree <- rpart(Subject.Cohort ~ .,parkinsons)
+rpart.plot(single_tree)
+```
+
+```{r,fig.height=4,fig.width=5}
+parkinsons <- parkinsons[-c(1)]
+single_tree <- rpart(Subject.Cohort ~ .,parkinsons)
+rpart.plot(single_tree)
+printcp(single_tree)
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+factor.columns <- sapply(parkinsons,function(x)
+  class(x) != 'integer' &
+  class(x) != 'numeric')
+
+parkinsons[,factor.columns] <- data.frame(apply(parkinsons[,factor.columns,drop=F], 2, as.factor),stringsAsFactors = TRUE)
+parkinsons <- na.roughfix(parkinsons)
+#Replace all numeric values that are represented by NA of the mean of that column
+```
+
+```{r}
+data <- parkinsons
+response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(data[response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+response_var <- data[!is.na(data[response]), colnames(data) == response]
+predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(response_var)
+nrow(data)
+nrow(parkinsons)
+```
+
+
+```{r}
+# Set seed for reproducible results
+#set.seed(1)
+
+# Downsample to the smaller class size
+response_var = as.factor(response_var)
+min_size = min(table(response_var))
+num_classes = length(table(response_var))
+
+# Train random forest
+#rf = rfExtra::randomForest(x = predictor_vars, y = response_var,
+    #importance = TRUE, ntree = 1e+05,
+    #sampsize = rep(min_size, num_classes))
+
+
+# Plot group variable importance
+#grpVarImpPlot(rf)
+```
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+
+# Train random forest models in parallel
+res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+```{r}
+par_rf$err.rate
+```
+
+```{r}
+par_rf$confusion
+```
+
+```{r}
+#normal rf
+RF_Model = rfExtra::randomForest(x = predictor_vars, y = response_var,
+    importance = TRUE, ntree = 1e+05,
+    sampsize = rep(min_size, num_classes))
+```
+
+```{r}
+plot(RF_Model)
+```
+
+```{r}
+plot(rf)
+```
+
+
+```{r}
+orderofimp<- data.frame(importance(rf))
+orderofimp2 <- orderofimp[order(-orderofimp$MeanDecreaseAccuracy),]
+show <- row.names(orderofimp2[0:20,])
+show
+orderofimp2
+```
+
+```{r,fig.height=4,fig.width=5}
+varImpPlot(Top_20_Important_Vars,n.var=20,type=1)
+```
+
+
+```{r}
+#predict(Subject.Cohort ~.,parkinsons,predict.all = TRUE)
+```
+
+```{r}
+es<- data.frame(importance(par_rf))
+es2 <- es[order(-es$MeanDecreaseAccuracy),]
+listt <- row.names(es2[0:30,])
+listt
+```
+
+```{r}
+new_df <- select(parkinsons, c("Subject.Cohort",show))
+new_df
+```
+
+
+```{r}
+#new_df <- select(parkinsons, c("Subject.Cohort",listt))
+#new_df
+```
+
+```{r}
+new_data <- new_df
+new_response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(new_data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(new_data[new_response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+new_response_var <- new_data[!is.na(new_data[new_response]), colnames(new_data) == new_response]
+new_predictor_vars <- new_data[!is.na(new_data[new_response]), colnames(new_data) != new_response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(new_response_var)
+nrow(new_data)
+nrow(parkinsons)
+```
+
+```{r}
+set.seed(1)
+
+# Downsample to the smaller class size
+new_response_var = as.factor(new_response_var)
+new_min_size = min(table(new_response_var))
+new_num_classes = length(table(new_response_var))
+```
+
+
+```{r}
+Top_20_Vars_in_Order_of_Imp = rfExtra::randomForest(x = new_predictor_vars, y = new_response_var,importance = TRUE, ntree = 1e+05,new_sampsize = rep(new_min_size, new_num_classes))
+```
+
+```{r}
+Top_20_Vars_in_Order_of_Imp
+```
+
+
+```{r}
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("new_predictor_vars", "new_response_var", "ntree_per_job", "new_min_size", "new_num_classes"))
+
+# Train random forest models in parallel
+new_res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = new_predictor_vars, y = new_response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+new_par_rf = do.call(rfExtra::combine, new_res)
+```
+
+```{r}
+new_par_rf$err.rate
+```
+
+```{r,fig.height=5,fig.width=5}
+varImpPlot(Top_20_Vars_in_Order_of_Imp,type=1)
+```
+
+```{r}
+implist<- data.frame(importance(par_rf))
+implistincreasing <- implist[order(implist$MeanDecreaseAccuracy),]
+implistincreasing
+```
+```{r}
+
+```
+
+
+```{r}
+N <- 301
+ilist <- vector()
+errlist <- vector()
+for(i in 1:N){
+  listt <- row.names(implistincreasing[i:N,])
+  new_df <- select(parkinsons, c("Subject.Cohort",listt))
+  data <- new_df
+  response <- "Subject.Cohort"
+  # Remove samples with missing values in the response variable
+  response_var <- data[!is.na(data[response]), colnames(data) ==
+                         response]
+  predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+  num_jobs = 8
+  ntree_per_job = ceiling(1000/num_jobs)
+  # Set seed for parallel environment
+  set.seed(1, "L'Ecuyer-CMRG")
+  cl <- makeCluster(getOption("cl.cores", num_jobs))
+  # Export variables
+  clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+  # Train random forest models in parallel
+  res = parLapply(cl, 1:num_jobs, function(num_jobs)
+  rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = FALSE, groupImp = FALSE))
+  # Remember to stop the cluster to avoid data leakage
+  stopCluster(cl)
+  # Combine results
+  par_rf = do.call(rfExtra::combine, res)
+  print(par_rf$err.rate)
+  ilist <- append(ilist,i)
+  errlist <- append(errlist,par_rf$err.rate)
+}
+x <- as.data.frame(ilist)
+y <- as.data.frame(errlist)
+df <- data.frame()
+df<- cbind(x,y)
+
+
+```
+
+```{r}
+ord <- df[order(df$errlist),]
+ord
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+<!--chapter:end:09-Random-Forest.Rmd-->
+
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Random Forest {#RandomForest}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown Description:
+
+This is an R Markdown document containing drafted statistical code that analyzes a longitudinal Parkinson's Disease Progression Marker Initiative Dataset extracted from this website <https://www.ppmi-info.org/>
+
+Data incorporates a longitudinal observational study of 716 subjects, where collection of observations began in 2010. Approximately 295 longitudinal observations are included in this dataset. 
+
+Random Forest Models and Feature Selection were incorporated to lower overall error rate of the predictive model.
+
+```{r cars}
+#libraries
+library(tidyverse)
+library(lubridate)
+library(randomForest)
+library(rfExtra)
+library(parallel)
+library(rpart)
+library(rpart.plot)
+```
+
+
+```{r}
+#loading data
+parkinsons <- read_csv("ppmi_data.csv", show_col_types = FALSE)
+
+parkinsons = data.frame(parkinsons,stringsAsFactors = TRUE)
+#still has NA slots at this point
+```
+
+```{r}
+single_tree <- rpart(Subject.Cohort ~ .,parkinsons)
+rpart.plot(single_tree)
+```
+
+```{r,fig.height=4,fig.width=5}
+parkinsons <- parkinsons[-c(1)]
+single_tree <- rpart(Subject.Cohort ~ .,parkinsons)
+rpart.plot(single_tree)
+printcp(single_tree)
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+factor.columns <- sapply(parkinsons,function(x)
+  class(x) != 'integer' &
+  class(x) != 'numeric')
+
+parkinsons[,factor.columns] <- data.frame(apply(parkinsons[,factor.columns,drop=F], 2, as.factor),stringsAsFactors = TRUE)
+parkinsons <- na.roughfix(parkinsons)
+#Replace all numeric values that are represented by NA of the mean of that column
+```
+
+```{r}
+data <- parkinsons
+response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(data[response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+response_var <- data[!is.na(data[response]), colnames(data) == response]
+predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(response_var)
+nrow(data)
+nrow(parkinsons)
+```
+
+
+```{r}
+# Set seed for reproducible results
+#set.seed(1)
+
+# Downsample to the smaller class size
+response_var = as.factor(response_var)
+min_size = min(table(response_var))
+num_classes = length(table(response_var))
+
+# Train random forest
+#rf = rfExtra::randomForest(x = predictor_vars, y = response_var,
+    #importance = TRUE, ntree = 1e+05,
+    #sampsize = rep(min_size, num_classes))
+
+
+# Plot group variable importance
+#grpVarImpPlot(rf)
+```
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+
+# Train random forest models in parallel
+res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+```{r}
+par_rf$err.rate
+```
+
+```{r}
+par_rf$confusion
+```
+
+```{r}
+#normal rf
+RF_Model = rfExtra::randomForest(x = predictor_vars, y = response_var,
+    importance = TRUE, ntree = 1e+05,
+    sampsize = rep(min_size, num_classes))
+```
+
+```{r}
+plot(RF_Model)
+```
+
+```{r}
+plot(rf)
+```
+
+
+```{r}
+orderofimp<- data.frame(importance(rf))
+orderofimp2 <- orderofimp[order(-orderofimp$MeanDecreaseAccuracy),]
+show <- row.names(orderofimp2[0:20,])
+show
+orderofimp2
+```
+
+```{r,fig.height=4,fig.width=5}
+varImpPlot(Top_20_Important_Vars,n.var=20,type=1)
+```
+
+
+```{r}
+#predict(Subject.Cohort ~.,parkinsons,predict.all = TRUE)
+```
+
+```{r}
+es<- data.frame(importance(par_rf))
+es2 <- es[order(-es$MeanDecreaseAccuracy),]
+listt <- row.names(es2[0:30,])
+listt
+```
+
+```{r}
+new_df <- select(parkinsons, c("Subject.Cohort",show))
+new_df
+```
+
+
+```{r}
+#new_df <- select(parkinsons, c("Subject.Cohort",listt))
+#new_df
+```
+
+```{r}
+new_data <- new_df
+new_response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(new_data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(new_data[new_response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+new_response_var <- new_data[!is.na(new_data[new_response]), colnames(new_data) == new_response]
+new_predictor_vars <- new_data[!is.na(new_data[new_response]), colnames(new_data) != new_response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(new_response_var)
+nrow(new_data)
+nrow(parkinsons)
+```
+
+```{r}
+set.seed(1)
+
+# Downsample to the smaller class size
+new_response_var = as.factor(new_response_var)
+new_min_size = min(table(new_response_var))
+new_num_classes = length(table(new_response_var))
+```
+
+
+```{r}
+Top_20_Vars_in_Order_of_Imp = rfExtra::randomForest(x = new_predictor_vars, y = new_response_var,importance = TRUE, ntree = 1e+05,new_sampsize = rep(new_min_size, new_num_classes))
+```
+
+```{r}
+Top_20_Vars_in_Order_of_Imp
+```
+
+
+```{r}
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("new_predictor_vars", "new_response_var", "ntree_per_job", "new_min_size", "new_num_classes"))
+
+# Train random forest models in parallel
+new_res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = new_predictor_vars, y = new_response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+new_par_rf = do.call(rfExtra::combine, new_res)
+```
+
+```{r}
+new_par_rf$err.rate
+```
+
+```{r,fig.height=5,fig.width=5}
+varImpPlot(Top_20_Vars_in_Order_of_Imp,type=1)
+```
+
+```{r}
+implist<- data.frame(importance(par_rf))
+implistincreasing <- implist[order(implist$MeanDecreaseAccuracy),]
+implistincreasing
+```
+```{r}
+
+```
+
+
+```{r}
+N <- 301
+ilist <- vector()
+errlist <- vector()
+for(i in 1:N){
+  listt <- row.names(implistincreasing[i:N,])
+  new_df <- select(parkinsons, c("Subject.Cohort",listt))
+  data <- new_df
+  response <- "Subject.Cohort"
+  # Remove samples with missing values in the response variable
+  response_var <- data[!is.na(data[response]), colnames(data) ==
+                         response]
+  predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+  num_jobs = 8
+  ntree_per_job = ceiling(1000/num_jobs)
+  # Set seed for parallel environment
+  set.seed(1, "L'Ecuyer-CMRG")
+  cl <- makeCluster(getOption("cl.cores", num_jobs))
+  # Export variables
+  clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+  # Train random forest models in parallel
+  res = parLapply(cl, 1:num_jobs, function(num_jobs)
+  rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = FALSE, groupImp = FALSE))
+  # Remember to stop the cluster to avoid data leakage
+  stopCluster(cl)
+  # Combine results
+  par_rf = do.call(rfExtra::combine, res)
+  print(par_rf$err.rate)
+  ilist <- append(ilist,i)
+  errlist <- append(errlist,par_rf$err.rate)
+}
+x <- as.data.frame(ilist)
+y <- as.data.frame(errlist)
+df <- data.frame()
+df<- cbind(x,y)
+
+
+```
+
+```{r}
+ord <- df[order(df$errlist),]
+ord
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+<!--chapter:end:09-Sample-Random-Forest.Rmd-->
+

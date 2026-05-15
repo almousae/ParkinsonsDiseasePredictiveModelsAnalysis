@@ -1,0 +1,13 @@
+useDynLib(rfExtra, .registration=TRUE)
+
+export(combine, groupImportance, randomForest, grpVarImpPlot)
+
+importFrom("grDevices", "rainbow")
+importFrom("graphics", "axis", "barplot", "dotchart", "lines",
+           "matplot", "mtext", "pairs", "par", "plot", "plot.default",
+           "points")
+importFrom("stats", "delete.response", "mad", "median", "model.frame",
+           "model.response", "na.fail", "na.omit", "napredict",
+           "predict", "quantile", "reformulate", "terms", "update",
+           "var", "weighted.mean")
+import("randomForest")

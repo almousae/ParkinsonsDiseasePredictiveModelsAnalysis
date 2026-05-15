@@ -1,0 +1,9 @@
+/* Code needs to be a smaller font to minimize horizontal scroll bars. */
+pre {
+  font-size: 12px;
+}
+
+p, li {
+  font-size: 16px;
+  color:#505050;
+}

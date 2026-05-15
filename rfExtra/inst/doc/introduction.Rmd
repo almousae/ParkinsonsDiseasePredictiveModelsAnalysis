@@ -1,0 +1,462 @@
+---
+title: "Introduction to rfExtra"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
+    math: katex
+    toc: TRUE
+    number_sections: TRUE
+    toc_depth: 2
+    css: styles.css
+  rmarkdown::html_vignette:
+    toc: TRUE
+    number_sections: TRUE
+    toc_depth: 2
+  pdf_document:
+    toc: TRUE
+    number_sections: TRUE
+    toc_depth: 2
+  github:
+    toc: TRUE
+    number_sections: TRUE
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy=TRUE, echo=TRUE, 
+                      collapse=TRUE, warning=FALSE, message=FALSE, eval=TRUE,
+                      fig.ext='png', dpi=600)
+```
+
+# Package description
+
+In the `rfExtra` package, we added permutated-based group variable importance to the `
+randomForest()` function based on the `randomForest` package by Andy Liaw and Matthew Wiener. 
+We modified the C code directly from the `randomForest` source package. Aside from the 
+`importance` argument, the `rfExtra::randomForest()` function now accepts `groupImp` for group 
+variable importance and `varGroups` as a factor vector indicating variable groups for predictor 
+variables in the data set. For each group of variables, for each tree, the grouped variables 
+are permutated individually first, and then the decrease in model performance (decrease in accuracy 
+for classification; increase in percent mean squared error for regression) is recorded. We then 
+compute the final importance after building all trees. 
+
+We also included the modified `combine()` function from the `randomForest` package. Unlike 
+the `randomForest::combine()` function that turns standard deviations for the component
+`importanceSD`, the components `importanceSD` and `groupImportanceSD` returned from 
+`rfExtra::combine()` will be standard errors. Specifically, in the original C code of 
+the `randomForest()` function, it is the standard error that is calculated using the
+following code: `sqrt(((sum(delta * delta) / Ntree) - av*av) / Ntree);`, where `delta` 
+indicates decrease in model performance. To combine smaller random forests generated with 
+parallel computing, in the modified `rfExtra::combine()` function, we first revert the calculation 
+for the standard error back to `sum(delta * delta)`, aggregate the results, and calculate the 
+final standard error across all trees in the combined random forest. 
+
+# Installation and setup
+
+```{r}
+# Install package from source
+# install.packages('~/Downloads/rfExtra_0.0.0.9000.tar.gz', type='source', repos=NULL, force=TRUE)
+
+# Load libraries
+library(randomForest)
+library(rfExtra)
+library(parallel)
+```
+
+We will be using the "Parkinsons" data set from the UCI machine learning repository.
+
+```{r}
+# Load data set
+data = read.table(file = "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/parkinsons.data",
+    sep = ",", header = TRUE, check.names = FALSE)
+data = subset(data, select = -name)
+```
+
+# Classification examples
+
+```{r}
+# Set response variable
+response = "status"
+
+# Split data
+predictor_vars = data[, colnames(data) != response]
+predictor_vars = na.roughfix(predictor_vars)
+response_var = data[, colnames(data) == response]
+
+# Downsample to the smaller class size
+response_var = as.factor(response_var)
+min_size = min(table(response_var))
+num_classes = length(table(response_var))
+```
+
+## Group variable importance
+
+The `rfExtra::randomForest()` function calculates permutation-based group 
+importance with a specified length `p` factor vector `varGroups`, where `p` 
+is the number of predictor variables.
+
+```{r}
+# Set seed for reproducible results
+set.seed(1) 
+
+# Train random forest
+rf = rfExtra::randomForest(x = predictor_vars, y = response_var, importance = TRUE,
+                           groupImp = TRUE, ntree = 100000, sampsize = rep(min_size, num_classes),
+                           varGroups=factor(c(rep('Group 1', 5), rep('Group 2', 11), rep('Group 3', 6))))
+
+# Plot group variable importance
+grpVarImpPlot(rf)
+```
+
+## Building random forest in parallel
+
+We can also build the random forest with parallel computing and use the 
+`rfExtra::combine()` function to combine the results. 
+
+```{r}
+# Set number of parallel streams and number of trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(100000 / num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG") 
+
+# Train random forest models in parallel
+res = mclapply(1:num_jobs, 
+               function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, 
+                                                        ntree = ntree_per_job, importance=TRUE,
+                                                        groupImp = TRUE,
+                                                        sampsize = rep(min_size, num_classes),
+                                                        varGroups = factor(c(rep('Group 1', 5), rep('Group 2', 11), 
+                                                                             rep('Group 3', 6)))))
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+The confusion matrices and error rates of the random forest models 
+trained using a single core and multiple cores are similar. 
+
+```{r}
+rf$confusion
+par_rf$confusion
+rf$err.rate[length(rf$err.rate)]
+par_rf$err.rate
+```
+
+## Comparing random forest models
+
+Here we compare six random forest models built with different parameter
+settings: 
+
+1. We first build a conventional random forest `randomForest_rf` using 
+the `randomForest` package and calculate the importance of all predictor 
+variables.
+
+```{r}
+set.seed(1)
+randomForest_rf = randomForest::randomForest(x = predictor_vars, y = response_var,
+                                             importance = TRUE, ntree = 100000, sampsize = rep(min_size, num_classes))
+```
+
+2. The second random forest `rfExtra_grpImp` is built using the `rfExtra`
+package, and the group permutation variable importance is calculated 
+where each group contains only one variable. The arguments `importance`
+and `groupImp` are set to `FALSE` and `TRUE` respectively. 
+
+```{r}
+set.seed(1)
+
+# Each group only has one variable
+groups = factor(colnames(predictor_vars), levels=colnames(predictor_vars))
+
+rfExtra_grpImp = rfExtra::randomForest(x = predictor_vars, y = response_var,
+                                       importance = FALSE, groupImp = TRUE, ntree = 100000, 
+                                       sampsize = rep(min_size, num_classes),
+                                       varGroups=groups)
+```
+
+3. The random forest `rfExtra_no_grpImp` is built using the `rfExtra` package, 
+and we only calculate individual variable importance by setting arguments
+`importance` and `groupImp` to `TRUE` and `FALSE` respectively. 
+
+```{r}
+set.seed(1)
+rfExtra_no_grpImp = rfExtra::randomForest(x = predictor_vars, y = response_var,
+                                             importance = TRUE, groupImp = FALSE, ntree = 100000, 
+                                             sampsize = rep(min_size, num_classes))
+```
+
+4. We can also build a random forest in parallel. Here we show an example using 
+the `randomForest` package and combine the smaller random forests with 
+`ntree_per_job` trees using the `randomForest::combine()` function that 
+returns standard deviations. The final random forest is called 
+`par_rf_randomForest_cbne`.
+
+```{r}
+# Set number of parallel streams and number of trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(100000 / num_jobs)
+
+set.seed(1, "L'Ecuyer-CMRG")
+randomForest_res = mclapply(1:num_jobs, 
+                            function(num_jobs) randomForest::randomForest(x = predictor_vars, y = response_var, 
+                                                                          ntree = ntree_per_job, importance = TRUE,
+                                                                          sampsize = rep(min_size, num_classes)))
+
+par_rf_randomForest_cbne = do.call(randomForest::combine, randomForest_res)
+```
+
+5. To compare the `combine()` functions from `randomForest` and `rfExtra` 
+packages, we generate the combined random forest `par_rf_rfExtra_cbne` 
+using the `rfExtra::combine()` function that returns standard errors. 
+
+```{r}
+par_rf_rfExtra_cbne = do.call(rfExtra::combine, randomForest_res)
+```
+
+6. Finally, we build another random forest in parallel using the 
+modified `rfExtra::randForest` function that calculates group variable
+importance. We then combine the results using the `rfExtra::combine()` 
+function.
+
+```{r}
+set.seed(1, "L'Ecuyer-CMRG")
+rfExtra_res = mclapply(1:num_jobs, 
+                       function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, 
+                                                                ntree = ntree_per_job, importance=FALSE,
+                                                                groupImp = TRUE,
+                                                                sampsize = rep(min_size, num_classes),
+                                                                varGroups = groups))
+
+par_rf_rfExtra_grpImp = do.call(rfExtra::combine, rfExtra_res)
+```
+
+Here we can plot variable importance results for different random 
+forests using the `varImpPlot()` function from the `randomForest` 
+package or the `grpVarImpPlot()` function from the `rfExtra` package. 
+
+```{r, fig.width=12, fig.height=8}
+par(mfrow = c(2, 3), mar = c(2, 2, 2, 2))
+varImpPlot(randomForest_rf, type = 1)
+grpVarImpPlot(rfExtra_grpImp)
+varImpPlot(rfExtra_no_grpImp, type = 1)
+varImpPlot(par_rf_randomForest_cbne, type = 1)
+varImpPlot(par_rf_rfExtra_cbne, type = 1)
+grpVarImpPlot(par_rf_rfExtra_grpImp)
+```
+
+```{r}
+# Compare importance measures of randomForest_rf, rfExtra_grpImp, and rfExtra_no_grpImp
+identical(importance(randomForest_rf, type=1), groupImportance(rfExtra_grpImp))
+identical(importance(randomForest_rf, type=1), importance(rfExtra_no_grpImp, type=1))
+```
+
+```{r}
+# Compare importance measures of par_rf_rfExtra_cbne and par_rf_rfExtra_grpImp
+identical(importance(par_rf_rfExtra_cbne, type=1), groupImportance(par_rf_rfExtra_grpImp))
+```
+
+The variable importance values in terms of ranks and magnitudes are 
+the same for `randomForest_rf`, `rfExtra_grpImp`, and `rfExtra_no_grpImp`, 
+which were built using the same seed number. However, note that the 
+individual variable importance and group variable importance are calculated
+sequentially for each tree in the `rfExtra::randomForest()` function. Thus, 
+setting both `importance` and `groupImp` to `TRUE` may slightly change 
+importance ranks, though this may not be a big issue for general variable 
+importance interpretation. 
+
+The importance measures for `par_rf_randomForest_cbne` and 
+`par_rf_rfExtra_cbne` differ in magnitudes because the former used standard 
+deviations to scale variable importance, whereas the latter used standard errors.
+The `par_rf_rfExtra_cbne` and `par_rf_rfExtra_grpImp` have the same variable
+importance results because they were built using the same random seeds in the
+parallel environment. 
+
+# Regression examples
+
+Similar to the classification examples, here we show examples of running 
+`rfExtra::randomForest()` using a single core or multiple cores in parallel.
+
+```{r}
+# Set response variable
+response = "PPE"
+
+# Split data
+predictor_vars = data[, colnames(data) != response]
+predictor_vars = na.roughfix(predictor_vars)
+response_var = data[, colnames(data) == response]
+```
+
+## Group variable importance
+
+```{r}
+# Set seed for reproducible results
+set.seed(1)
+
+# Train random forest
+rf = rfExtra::randomForest(x = predictor_vars, y = response_var, importance = TRUE,
+                           groupImp = TRUE, ntree = 100000, 
+                           varGroups=factor(c(rep('Group 1', 5), rep('Group 2', 11), rep('Group 3', 6))))
+
+# Plot group variable importance
+grpVarImpPlot(rf)
+```
+
+## Building random forest in parallel
+
+```{r}
+# Set number of parallel streams and number of trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(100000 / num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG") 
+
+# Train random forest models in parallel
+res = mclapply(1:num_jobs, 
+               function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, 
+                                                        ntree = ntree_per_job, importance=TRUE,
+                                                        groupImp = TRUE,
+                                                        varGroups = factor(c(rep('Group 1', 5), rep('Group 2', 11), 
+                                                                             rep('Group 3', 6)))))
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+The mean squared errors and (pseudo) R-squared values are similar 
+for the two models.
+
+```{r}
+rf$mse[length(rf$mse)]
+par_rf$mse
+rf$rsq[length(rf$rsq)]
+par_rf$rsq
+```
+
+## Comparing random forest models
+
+We build random forests with the same parameter settings as the classification 
+examples:
+
+1. We first build a conventional random forest `randomForest_rf` using 
+the `randomForest` package and calculate the importance of all predictor 
+variables.
+
+```{r}
+set.seed(1)
+randomForest_rf = randomForest::randomForest(x = predictor_vars, y = response_var,
+                                             importance = TRUE, ntree = 100000)
+```
+
+2. The second random forest `rfExtra_grpImp` is built using the `rfExtra`
+package, and the group permutation variable importance is calculated 
+where each group contains only one variable. The arguments `importance`
+and `groupImp` are set to `FALSE` and `TRUE` respectively. 
+
+```{r}
+set.seed(1)
+
+# Each group only has one variable
+groups = factor(colnames(predictor_vars), levels=colnames(predictor_vars))
+
+rfExtra_grpImp = rfExtra::randomForest(x = predictor_vars, y = response_var,
+                                       importance = FALSE, groupImp = TRUE, ntree = 100000, 
+                                       varGroups=groups)
+```
+
+3. The random forest `rfExtra_no_grpImp` is built using the `rfExtra` package, 
+and we only calculate individual variable importance by setting arguments
+`importance` and `groupImp` to `TRUE` and `FALSE` respectively. 
+
+```{r}
+set.seed(1)
+rfExtra_no_grpImp = rfExtra::randomForest(x = predictor_vars, y = response_var,
+                                          importance = TRUE, groupImp = FALSE, ntree = 100000)
+```
+
+4. We can also build a random forest in parallel. Here we show an example using 
+the `randomForest` package and combine the smaller random forests with 
+`ntree_per_job` trees using the `randomForest::combine()` function that 
+returns standard deviations. The final random forest is called 
+`par_rf_randomForest_cbne`.
+
+```{r}
+# Set number of parallel streams and number of trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(100000 / num_jobs)
+
+set.seed(1, "L'Ecuyer-CMRG")
+randomForest_res = mclapply(1:num_jobs, 
+                            function(num_jobs) randomForest::randomForest(x = predictor_vars, y = response_var, 
+                                                                          ntree = ntree_per_job, importance = TRUE))
+
+par_rf_randomForest_cbne = do.call(randomForest::combine, randomForest_res)
+```
+
+5. To compare the `combine()` functions from `randomForest` and `rfExtra` 
+packages, we generate the combined random forest `par_rf_rfExtra_cbne` 
+using the `rfExtra::combine()` function that returns standard errors. 
+
+```{r}
+par_rf_rfExtra_cbne = do.call(rfExtra::combine, randomForest_res)
+```
+
+6. Finally, we build another random forest in parallel using the 
+modified `rfExtra::randForest` function that calculates group variable
+importance. We then combine the results using the `rfExtra::combine()` 
+function.
+
+```{r}
+set.seed(1, "L'Ecuyer-CMRG")
+rfExtra_res = mclapply(1:num_jobs, 
+                       function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, 
+                                                                ntree = ntree_per_job, importance=FALSE,
+                                                                groupImp = TRUE,
+                                                                varGroups = groups))
+
+par_rf_rfExtra_grpImp = do.call(rfExtra::combine, rfExtra_res)
+```
+
+The variable importance plots are shown below. The comparison results
+are similar to those shown in the classification section. 
+
+```{r, fig.width=12, fig.height=8}
+par(mfrow = c(2, 3), mar = c(2, 2, 2, 2))
+varImpPlot(randomForest_rf, type = 1)
+grpVarImpPlot(rfExtra_grpImp)
+varImpPlot(rfExtra_no_grpImp, type = 1)
+varImpPlot(par_rf_randomForest_cbne, type = 1)
+varImpPlot(par_rf_rfExtra_cbne, type = 1)
+grpVarImpPlot(par_rf_rfExtra_grpImp)
+```
+
+```{r}
+# Compare importance measures of randomForest_rf, rfExtra_grpImp, and rfExtra_no_grpImp
+identical(importance(randomForest_rf, type=1), groupImportance(rfExtra_grpImp))
+identical(importance(randomForest_rf, type=1), importance(rfExtra_no_grpImp, type=1))
+```
+
+```{r}
+# Compare importance measures of par_rf_rfExtra_cbne and par_rf_rfExtra_grpImp
+identical(importance(par_rf_rfExtra_cbne, type=1), groupImportance(par_rf_rfExtra_grpImp))
+```
+
+# References
+
+Liaw, A. and Wiener, M. (2002), Classification and regression by randomForest, R news 2(3), 18–22, https://cran.r-project.org/web/packages/randomForest/randomForest.pdf.
+
+Breiman, L. (2001), Random Forests, Machine Learning 45(1), 5-32.
+
+Breiman, L (2002), “Manual On Setting Up, Using, And Understanding Random Forests V3.1”,
+https://www.stat.berkeley.edu/~breiman/Using_random_forests_V3.1.pdf.
+
+
+
+

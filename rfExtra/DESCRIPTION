@@ -1,0 +1,14 @@
+Package: rfExtra
+Title: Extension for 'randomForest' package
+Version: 0.0.0.9000
+Depends: R (>= 4.1.0), stats, randomForest (>= 4.7-1)
+Suggests: RColorBrewer, MASS, parallel, knitr, rmarkdown
+Author: R and C code original by Andy Liaw and Matthew Wiener. Fortran original by Leo Breiman and Adele Cutler. 
+Description: The package contains additional analytical functions based on the randomForest package, including permutation-based group variable importance measures.
+Maintainer: First Last <first.last@example.com>
+License: GPL (>= 2)
+URL: https://www.stat.berkeley.edu/~breiman/RandomForests/
+Encoding: UTF-8
+VignetteBuilder: knitr
+NeedsCompilation: yes
+Packaged: 2022-03-29 22:58:23 UTC; renee

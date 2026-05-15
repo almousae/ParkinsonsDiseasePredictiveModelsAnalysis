@@ -1,0 +1,333 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Random Forest {#RandomForest}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+#libraries
+library(tidyverse)
+library(lubridate)
+library(randomForest)
+library(rfExtra)
+library(parallel)
+library(rpart)
+library(rpart.plot)
+```
+
+
+```{r}
+#loading data
+parkinsons <- read_csv("ppmi_data.csv", show_col_types = FALSE)
+
+parkinsons = data.frame(parkinsons,stringsAsFactors = TRUE)
+#still has NA slots at this point
+```
+
+```{r}
+single_tree <- rpart(Subject.Cohort ~ .,parkinsons)
+rpart.plot(single_tree)
+```
+
+```{r,fig.height=4,fig.width=5}
+parkinsons <- parkinsons[-c(1)]
+single_tree <- rpart(Subject.Cohort ~ .,parkinsons)
+rpart.plot(single_tree)
+printcp(single_tree)
+```
+
+
+```{r}
+
+factor.columns <- sapply(parkinsons,function(x)
+  class(x) != 'integer' &
+  class(x) != 'numeric')
+
+parkinsons[,factor.columns] <- data.frame(apply(parkinsons[,factor.columns,drop=F], 2, as.factor),stringsAsFactors = TRUE)
+parkinsons <- na.roughfix(parkinsons)
+#Replace all numeric values that are represented by NA of the mean of that column
+```
+
+```{r}
+data <- parkinsons
+response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(data[response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+response_var <- data[!is.na(data[response]), colnames(data) == response]
+predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+
+# Impute missing values in predictor variables
+predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+
+length(response_var)
+length(predictor_vars)
+nrow(data)
+nrow(parkinsons)
+response_var
+```
+
+
+```{r}
+# Set seed for reproducible results
+#set.seed(1)
+
+# Downsample to the smaller class size
+response_var = as.factor(response_var)
+min_size = min(table(response_var))
+num_classes = length(table(response_var))
+
+# Train random forest
+#rf = rfExtra::randomForest(x = predictor_vars, y = response_var,
+    #importance = TRUE, ntree = 1e+05,
+    #sampsize = rep(min_size, num_classes))
+
+
+# Plot group variable importance
+#grpVarImpPlot(rf)
+```
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+
+# Train random forest models in parallel
+res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+```{r}
+par_rf$err.rate
+```
+
+```{r}
+par_rf$confusion
+```
+
+```{r}
+#normal rf
+RF_Model = rfExtra::randomForest(x = predictor_vars, y = response_var,
+    importance = TRUE, ntree = 1e+05,
+    sampsize = rep(min_size, num_classes))
+```
+
+```{r}
+plot(RF_Model)
+```
+
+```{r}
+plot(rf)
+```
+
+
+```{r}
+orderofimp<- data.frame(importance(rf))
+orderofimp2 <- orderofimp[order(-orderofimp$MeanDecreaseAccuracy),]
+show <- row.names(orderofimp2[0:20,])
+show
+orderofimp2
+```
+
+```{r,fig.height=4,fig.width=5}
+varImpPlot(Top_20_Important_Vars,n.var=20,type=1)
+```
+
+
+```{r}
+#predict(Subject.Cohort ~.,parkinsons,predict.all = TRUE)
+```
+
+```{r}
+es<- data.frame(importance(par_rf))
+es2 <- es[order(-es$MeanDecreaseAccuracy),]
+listt <- row.names(es2[0:30,])
+listt
+```
+
+```{r}
+new_df <- select(parkinsons, c("Subject.Cohort",show))
+new_df
+```
+
+
+```{r}
+#new_df <- select(parkinsons, c("Subject.Cohort",listt))
+#new_df
+```
+
+```{r}
+new_data <- new_df
+new_response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(new_data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(new_data[new_response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+new_response_var <- new_data[!is.na(new_data[new_response]), colnames(new_data) == new_response]
+new_predictor_vars <- new_data[!is.na(new_data[new_response]), colnames(new_data) != new_response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(new_response_var)
+nrow(new_data)
+nrow(parkinsons)
+```
+
+```{r}
+set.seed(1)
+
+# Downsample to the smaller class size
+new_response_var = as.factor(new_response_var)
+new_min_size = min(table(new_response_var))
+new_num_classes = length(table(new_response_var))
+```
+
+
+```{r}
+Top_20_Vars_in_Order_of_Imp = rfExtra::randomForest(x = new_predictor_vars, y = new_response_var,importance = TRUE, ntree = 1e+05,new_sampsize = rep(new_min_size, new_num_classes))
+```
+
+```{r}
+Top_20_Vars_in_Order_of_Imp
+```
+
+
+```{r}
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("new_predictor_vars", "new_response_var", "ntree_per_job", "new_min_size", "new_num_classes"))
+
+# Train random forest models in parallel
+new_res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = new_predictor_vars, y = new_response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+new_par_rf = do.call(rfExtra::combine, new_res)
+```
+
+```{r}
+new_par_rf$err.rate
+```
+
+```{r,fig.height=5,fig.width=5}
+varImpPlot(Top_20_Vars_in_Order_of_Imp,type=1)
+```
+
+```{r}
+implist<- data.frame(importance(par_rf))
+implistincreasing <- implist[order(implist$MeanDecreaseAccuracy),]
+implistincreasing
+```
+```{r}
+
+```
+
+
+```{r}
+N <- 301
+ilist <- vector()
+errlist <- vector()
+for(i in 1:N){
+  listt <- row.names(implistincreasing[i:N,])
+  new_df <- select(parkinsons, c("Subject.Cohort",listt))
+  data <- new_df
+  response <- "Subject.Cohort"
+  # Remove samples with missing values in the response variable
+  response_var <- data[!is.na(data[response]), colnames(data) ==
+                         response]
+  predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+  num_jobs = 8
+  ntree_per_job = ceiling(1000/num_jobs)
+  # Set seed for parallel environment
+  set.seed(1, "L'Ecuyer-CMRG")
+  cl <- makeCluster(getOption("cl.cores", num_jobs))
+  # Export variables
+  clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+  # Train random forest models in parallel
+  res = parLapply(cl, 1:num_jobs, function(num_jobs)
+  rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = FALSE, groupImp = FALSE))
+  # Remember to stop the cluster to avoid data leakage
+  stopCluster(cl)
+  # Combine results
+  par_rf = do.call(rfExtra::combine, res)
+  print(par_rf$err.rate)
+  ilist <- append(ilist,i)
+  errlist <- append(errlist,par_rf$err.rate)
+}
+x <- as.data.frame(ilist)
+y <- as.data.frame(errlist)
+df <- data.frame()
+df<- cbind(x,y)
+
+
+```
+
+```{r}
+ord <- df[order(df$errlist),]
+ord
+```
+

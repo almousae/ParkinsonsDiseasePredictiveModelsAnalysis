@@ -1,0 +1,557 @@
+# Trees {#trees}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+library(rpart)
+library(rpart.plot)
+data(cars)
+str(cars)
+m1 <- rpart(dist ~ speed, data=cars)
+rpart.plot(m1)
+```
+
+```{r}
+library(tree)
+z.car <- tree(speed ~ dist,cars)
+z.car
+plot(z.car)
+text(z.car)
+```
+```{r}
+##install.packages("tidyverse")
+##install.packages("lubridate")
+library(tidyverse)
+library(lubridate)
+data(iris)
+n.iris <- iris %>%
+  rename(S.Length=Sepal.Length, S.Width=Sepal.Width, P.Length=Petal.Length, P.Width=Petal.Width)
+z.iris <- tree(Species ~ S.Length + S.Width + P.Length+ P.Width, n.iris)
+z.iris
+plot(z.iris)
+text(z.iris)
+```
+
+```{r}
+k1 <- rpart(Species ~ Sepal.Length + Sepal.Width + Petal.Length+ Petal.Width, iris)
+k1
+rpart.plot(k1)
+```
+
+
+```{r}
+
+#parkinsons = read.csv('ppmi_data.csv',check.names = FALSE, stringAsFactors = TRUE)
+
+parkinsons <- read_csv("ppmi_data.csv", show_col_types = FALSE)
+
+parkinsons = data.frame(parkinsons,stringsAsFactors = TRUE)
+
+#parkinsons <- parkinsons %>%
+ # rename(Subject.Cohort="Subject Cohort",FamilyHistory="Has Family Members with PD",AgeatScreening = "Age at Screening", YearsofEducation = "Years of Education",
+#BentonScore6 = "Benton Judgment of Line Orientation Score (Visit 06 (Month 24))")
+#ptree <- rpart(YearsofEducation ~ AgeatScreening, parkinsons)
+##ptree <- rpart(Subject.Cohort ~ FamilyHistory + Handedness + Gender, data=parkinsons)
+#rpart.plot(ptree)
+```
+
+
+
+```{r}
+#ntree <- rpart(YearsofEducation ~ AgeatScreening + BentonScore6, parkinsons)
+#rpart.plot(ntree)
+```
+```{r}
+stree <-  rpart(Gender ~ ., data=parkinsons)
+rpart.plot(stree)
+```
+
+
+```{r}
+ltree <- rpart(Gender ~ ., data=parkinsons)
+summary(ltree)
+
+s <- rpart.plot(ltree)
+```
+
+
+```{r}
+data("women")
+data("kyphosis")
+k <- rpart(Age ~ Kyphosis, kyphosis)
+rpart.plot(k)
+```
+
+
+## Including Plots
+
+```{r}
+library(randomForest)
+rtree1 <- rpart(Species ~.,iris)
+rtree2 <- rpart(Species ~.,control = rpart.control(cp=0,minsplit=1),iris)
+#complexity parameter: 
+#minsplit:min number of observations to be present for a split to occur
+rpart.plot(rtree1)
+rpart.plot(rtree2)
+```
+```{r}
+#set.seed(200)
+#rf1 <- randomForest(Species ~., ntree = 500, mtry = 4, iris)
+##number of variables randomly sampled
+#rf
+#plot(rf1)
+```
+
+```{r} 
+library(rfUtilities)
+library(randomForest)
+#rf.crossValidation(rf, #iris[,c(1:4)],ydata=iris$Species,seed=590)
+```
+
+```{r}
+factor.columns <- sapply(parkinsons,function(x)
+  class(x) != 'integer' &
+  class(x) != 'numeric')
+
+parkinsons[,factor.columns] <- data.frame(apply(parkinsons[,factor.columns,drop=F], 2, as.factor),stringsAsFactors = TRUE)
+parkinsons <- na.roughfix(parkinsons)
+```
+
+```{r}
+library(randomForest)
+# Parkinson's data set (classification)
+#data <- read.table(file = "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/parkinsons.data", sep = ",", header = TRUE, check.names = FALSE)
+data <- parkinsons
+response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(data[response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+response_var <- data[!is.na(data[response]), colnames(data) == response]
+predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(response_var)
+nrow(data)
+nrow(parkinsons)
+
+```
+
+
+```{r}
+#install.packages('rfExtra_0.0.0.9000.tar.gz',type='source', #repos=NULL, force=TRUE)
+library(rfExtra)
+library(parallel)
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+# Set seed for reproducible results
+set.seed(1)
+
+# Downsample to the smaller class size
+response_var = as.factor(response_var)
+min_size = min(table(response_var))
+num_classes = length(table(response_var))
+
+# Train random forest
+rf = rfExtra::randomForest(x = predictor_vars, y = response_var,
+    importance = TRUE, groupImp = TRUE, ntree = 1e+05,
+    sampsize = rep(min_size, num_classes), varGroups = factor(c(rep("Group 1",
+        5), rep("Group 2", 11), rep("Group 3", 6))))
+
+
+# Plot group variable importance
+grpVarImpPlot(rf)
+
+
+```
+```{r}
+impo<- data.frame(importance(rf))
+impo2 <- impo[order(-impo$MeanDecreaseAccuracy),]
+
+```
+
+```{r}
+rf
+```
+
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+
+# Train random forest models in parallel
+res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+
+```{r}
+par_rf$confusion
+```
+
+
+```{r}
+es<- data.frame(importance(par_rf))
+es2 <- es[order(-es$MeanDecreaseAccuracy),]
+listt <- row.names(es2[0:30,])
+listt
+
+```
+
+```{r}
+library(tidyverse)
+library(dplyr)
+new_df <- select(parkinsons, c("Subject.Cohort",listt))
+new_df
+```
+
+```{r}
+library(randomForest)
+# Parkinson's data set (classification)
+#data <- read.table(file = "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/parkinsons.data", sep = ",", header = TRUE, check.names = FALSE)
+data <- new_df
+response <- "Subject.Cohort"
+
+# Show data dimensions
+dim(data)
+## [1] 195  23
+
+# To demonstrate missing imputation, here we randomly select 100 values and convert them to missing values
+#set.seed(1) # For reproducibility
+#for (i in seq_len(100)) {
+ # data[sample(1:nrow(data), 1), sample(1:ncol(data), 1)] <- NA
+#}
+
+# Show number of NAs in response variable
+table(data[response], useNA='ifany')
+## status
+## 0    1 <NA> 
+## 48  144    3 
+
+# Remove samples with missing values in the response variable
+response_var <- data[!is.na(data[response]), colnames(data) == response]
+predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+
+# Impute missing values in predictor variables
+#predictor_vars <- na.roughfix(predictor_vars)
+
+# Show dimensions of response and predictor variables
+length(response_var)
+nrow(data)
+nrow(parkinsons)
+
+```
+
+
+```{r}
+# Set seed for reproducible results
+set.seed(1)
+
+# Downsample to the smaller class size
+response_var = as.factor(response_var)
+min_size = min(table(response_var))
+num_classes = length(table(response_var))
+```
+
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 8
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Register clusters
+cl <- makeCluster(getOption("cl.cores", num_jobs))
+
+# Export variables
+clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+
+# Train random forest models in parallel
+res = parLapply(cl, 1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = TRUE, varGroups = factor(c(rep("Group 1", 5), rep("Group 2", 11), rep("Group 3", 6)))))
+
+# Remember to stop the cluster to avoid data leakage
+stopCluster(cl)
+
+# Combine results
+par_rf = do.call(rfExtra::combine, res)
+```
+
+```{r}
+
+par_rf$err.rate
+```
+```{r}
+
+```
+
+
+```{r}
+N <- 301
+ilist <- vector()
+errlist <- vector()
+for(i in 6:N){
+  listt <- row.names(es2[0:N,])
+  new_df <- select(parkinsons, c("Subject.Cohort",listt))
+  data <- new_df
+  response <- "Subject.Cohort"
+  # Remove samples with missing values in the response variable
+  response_var <- data[!is.na(data[response]), colnames(data) ==
+                         response]
+  predictor_vars <- data[!is.na(data[response]), colnames(data) != response]
+  num_jobs = 8
+  ntree_per_job = ceiling(1000/num_jobs)
+  # Set seed for parallel environment
+  set.seed(1, "L'Ecuyer-CMRG")
+  cl <- makeCluster(getOption("cl.cores", num_jobs))
+  # Export variables
+  clusterExport(cl=cl, varlist=c("predictor_vars", "response_var", "ntree_per_job", "min_size", "num_classes"))
+  # Train random forest models in parallel
+  res = parLapply(cl, 1:num_jobs, function(num_jobs)
+  rfExtra::randomForest(x = predictor_vars, y = response_var, ntree = ntree_per_job, importance = TRUE, groupImp = FALSE))
+  # Remember to stop the cluster to avoid data leakage
+  stopCluster(cl)
+  # Combine results
+  par_rf = do.call(rfExtra::combine, res)
+  print(par_rf$err.rate)
+  ilist <- append(ilist,i)
+  errlist <- append(errlist,par_rf$err.rate)
+}
+x <- as.data.frame(ilist)
+y <- as.data.frame(errlist)
+df <- data.frame()
+df<- cbind(x,y)
+
+
+
+```
+
+```{r}
+ord <- df[order(df$errlist),]
+ord
+```
+```{r}
+plot(ord)
+```
+
+
+```{r}
+# Set number of parallel streams and number of
+# trees for each stream
+num_jobs = 1
+ntree_per_job = ceiling(1e+05/num_jobs)
+
+# Set seed for parallel environment
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Train random forest models in parallel
+system.time({
+    res = mclapply(1:num_jobs, function(num_jobs) rfExtra::randomForest(x = predictor_vars,
+        y = response_var, ntree = ntree_per_job, importance = TRUE,
+        groupImp = TRUE, sampsize = rep(min_size, num_classes),
+        varGroups = factor(c(rep("Group 1", 5), rep("Group 2",
+            11), rep("Group 3", 6)))), mc.cores = num_jobs)
+})
+```
+
+```{r}
+par_rf = do.call(rfExtra::combine, rf)
+```
+```{r}
+cl <- makeCluster(2)
+```
+
+```{r}
+
+```
+
+
+```{r}
+park <- randomForest(Subject.Cohort ~ .,ntree= 100,parkinsons,importance=TRUE)
+
+
+
+ds<- data.frame(importance(park))
+ds2 <- ds[order(-ds$MeanDecreaseAccuracy),]
+
+#order(importance(park))
+
+#plot(importance(park))
+
+```
+
+
+```{r}
+set.seed(195)
+rf3 <- randomForest(Species ~., ntree = 10000, mtry = 4, iris)
+rf3
+plot(rf3)
+```
+
+```{r}
+set.seed(195)
+rf4 <- randomForest(Species ~., ntree = 3, mtry = 4, iris)
+rf4
+plot(rf4)
+```
+
+```{r}
+set.seed(195)
+rf5 <- randomForest(Species ~., ntree = 500, mtry = 1, iris)
+rf5
+plot(rf5)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+diamonds1 <- diamonds[c(1:3000),]
+er <- randomForest(price ~.,diamonds1)
+er
+summary(er)
+```
+```{r}
+
+#parkinsons <- parkinsons %>%
+
+
+p#arktree <- randomForest(Subject.Cohort ~ ., parkinsons)
+
+```
+
+
+
+```{r}
+importance(er)
+order(importance(er)) #least to greatest
+```
+
+```{r}
+varImpPlot(er,color = "blue")
+```
+
+```{r}
+ctree <- rpart(price ~ .,diamonds1)
+rpart.plot(ctree)
+```
+
+```{r}
+cr <- randomForest(carat ~ ., diamonds1)
+importance(cr)
+```
+
+```{r}
+dtree <- rpart(carat ~ .,diamonds1)
+rpart.plot(dtree)
+```
+```{r}
+library(pacman)
+```
+
+
+
+```{r}
+beta0 = 1.5 #intercept
+slope = 2.0
+set.seed(2)
+n = 500 #sample size
+M = 1000 #number of times population is resampled
+
+#normal distributions
+error = rnorm(n, mean = 0, sd = 2)
+X = rnorm(n, mean = 5, sd = 5)
+Y = beta0 + slope*X + error
+
+library(data.table)
+pacman::p_load(data.table,fixest)
+data = data.table(X=X,Y=Y)
+
+#show regressions and compare to true parameters
+regression <- feols(data = data, Y ~ X)
+#calc conf interv
+conf95 <- c(regression$coefficients[2] - 1.96 * regression$se[2],regression$coefficients[2] + 1.96 * regression$se[2])
+regression
+conf95 # pop parameter between these two values 95% of the time
+```
+
+```{r}
+#bootstrap can help get an estimate of se of the slope aka:
+regression$se[2]
+```
+
+```{r}
+#sample rows in the data randomly with replacement:
+#(500 rows)
+X<- as.matrix(cbind(1,X))
+Y <- as.matrix(Y)
+#beta <-solve(t(X%*%X)%*%t(X)%*%Y)
+
+slopeest <- rep (0,M)
+interceptest <- rep(0,M)
+
+#bootstrapping
+for( i in 1:M) { # 1 to 1000 
+  boot <- data[sample(n,n,replace= TRUE)]
+  bootX <- as.matrix(boot[,c(1,2)])
+  bootY <- as.matrix(boot[,c(3)])
+  boot_beta <-solve(t(bootX%*%bootX)%*%t(bootX)%*%bootY)
+  interceptest[i] <- boot_beta[1]
+  slopeest[i] <- boot_beta[2]
+}
+
+bootSEint <- sd(interceptes)
+bootSEslope <- sd(slopeest)
+
+#t stats distrubution
+#t <- (slopeest - beta[2]) / sd(slopeest)
+
+#find parameters 
+  
+```
+
