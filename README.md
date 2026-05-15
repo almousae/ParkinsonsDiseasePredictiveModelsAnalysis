@@ -1,4 +1,4 @@
-# ParkinsonsDiseasePredictiveModelsAnalysis
+# Parkinson's Disease Predictive Models Analysis
 ## Description
 Implemented machine learning models to predict Parkinson's Disease and identify significant risk factors 
 
